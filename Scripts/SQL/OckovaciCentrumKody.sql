@@ -1,0 +1,4 @@
+USE CovidDwhDEV
+
+--idcka FirstNotSecond
+

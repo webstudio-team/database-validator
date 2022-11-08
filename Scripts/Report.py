@@ -199,5 +199,3 @@ class Initialiser(ReportBase):
         self.organiser(tables)
 
 
-myInit = Initialiser(['{SQL SERVER}', 'UZSSQL01', 'CovidDwhDEV', 'yes' ], '[AZURE SQL DATABASE].[syn-prod-coviddwh]')
-myInit.runTime()
