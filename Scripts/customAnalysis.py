@@ -74,14 +74,14 @@ class Analysis():
         comparedFrames.to_csv(f"C:\\Users\\balazia\\Ukoly\\prepis\\Automation\\DataComparison\\Output\\customAnalysis\\{filename}_comp.csv", encoding='UTF-8')
 
     
-    def task(self):
+    def workflow(self):
         self.columnSorting()
         print(self.dFrameOne.shape[0])
         print(self.dFrameTwo.shape[0])
         self.comparison()
 
 
-#zmena na concurrent flow?
+
 
 
 

@@ -135,7 +135,6 @@ class DataXtractor:
                 print(f"\n Currently processing : {self.tableToQuery}\n")
                 try:
                     self.query(self.tableToQuery)
-                    self.toCsvFile(self.tableToQuery)
                 except pd.io.sql.DatabaseError or pyodbc.ProgrammingError:
                     logger.warning("\nAn error occured during query execution. Repeating step.")
                     self.queryAutomatically()
@@ -150,7 +149,7 @@ class DataXtractor:
         else:
             print(f"\nNo objects left to analyze in {key} set. ")
           
-    def query(self):
+    def queryExecution(self):
         self.manualVsAutomatic = input("Manual [m] / Automatic [a] table input. ")
         if self.manualVsAutomatic == 'a':
             self.queryAutomatically()
@@ -158,8 +157,8 @@ class DataXtractor:
             self.queryManually()
         else:
             print("Invalid character input. Enter a valid character.")
-            self.query()
+            self.queryExecution()
 
     def workflow(self):
         self.find_all_tables()
-        self.query()
+        self.queryExecution()

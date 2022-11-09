@@ -161,6 +161,8 @@ class Report(ReportBase):
 class Initialiser(ReportBase):
     def __init__(self, config, second_db):
         super().__init__(config, second_db)
+        self.configRaw = config
+        self.secondDbRaw = second_db
     
 
     def tableInits(self):
@@ -181,7 +183,7 @@ class Initialiser(ReportBase):
 
     def organiser(self,tables:list):
         tables=tables
-        tasks = [Report(['{SQL SERVER}', 'UZSSQL01', 'CovidDwhDEV', 'yes' ], '[AZURE SQL DATABASE].[syn-prod-coviddwh]',str(table)).workflow for table in tables]
+        tasks = [Report(self.configRaw, self.secondDbRaw,str(table)).workflow for table in tables]
         print(tasks)
         for task in tasks:
             task()
