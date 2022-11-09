@@ -1,1 +1,1 @@
-
+Source dir sluzi ako adresar pre csv subory ktore sa daju porovnavat. Tabulky musia mat rovnaky tvar - stlpce aj zaznamy.
