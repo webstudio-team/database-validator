@@ -7,18 +7,18 @@ import os
 ------------Settings------------
 """
 
-config = ""
-second_db = ""
-path = r""
+config = ['{SQL SERVER}', 'UZSSQL01', 'CovidDwhPROD', 'yes', 'MZNET\\uzubalazia' ]
+second_db = '[AZURE SQL DATABASE].[syn-prod-coviddwh]'
+path = r"C:\Users\balazia\Ukoly\Dashboard\prepis\Automation\DataComparison\Output\customAnalysis\Source"
 toAnalyze = os.listdir(path)
 
 def analyze(listOfFiles:list=toAnalyze):
-    task = Analysis(f"{path}\\{listOfFiles[0]}",f"{path}\\{listOfFiles[1]}")
-    task.workflow()
-
     if listOfFiles:
-        return analyze(listOfFiles[2:])
+        taskOne = Analysis(f"{path}\\{listOfFiles[0]}",f"{path}\\{listOfFiles[1]}")
+        taskOne.workflow()
 
+        return analyze(listOfFiles=listOfFiles[2:])
+    
 def importCsv():
     return DataXtractor(config, second_db).workflow()
 
