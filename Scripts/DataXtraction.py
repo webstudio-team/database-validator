@@ -12,7 +12,7 @@ class DataXtractor:
     """
     !!! Configured for windows authentication for SQL Server !!!
     """
-    def __init__(self, list_of_conx_string:list, second_database:str):
+    def __init__(self, list_of_conx_string:list, second_database:str, ):
             #class constructor
             self.table1 = None
             self.table2 = None
@@ -111,6 +111,7 @@ class DataXtractor:
         print(self.workdict)
         self.tableToQuery = input("Enter a table name for querying: ")
         logger.info("Proceeding to queries.")
+        
         try:
             self.query(self.tableToQuery)
             self.querySecond(self.tableToQuery)
@@ -119,11 +120,12 @@ class DataXtractor:
             logger.warning("An unknown error occured.")
         else:
             terminateContinue = input("End the process [q] or continue [any key].")
+            
             if terminateContinue == 'q':
                 return
-        finally:
-            logger.info("Proceeding to a new query.")
-            self.queryManually()
+            else:
+                logger.info("Proceeding to a new query.")
+        self.queryManually()
 
     def queryAutomatically(self):
         print("Objects left for analysis:\n ")
@@ -133,6 +135,7 @@ class DataXtractor:
             if len(self.workdict[key]) != 0:
                 self.tableToQuery = self.workdict[key][0]
                 print(f"\n Currently processing : {self.tableToQuery}\n")
+
                 try:
                     self.query(self.tableToQuery)
                 except pd.io.sql.DatabaseError or pyodbc.ProgrammingError:
@@ -146,8 +149,10 @@ class DataXtractor:
                     self.queryAutomatically()
                 else:
                     self.workdict[key].remove(self.tableToQuery)
-        else:
-            print(f"\nNo objects left to analyze in {key} set. ")
+                    self.queryAutomatically()
+
+            else:
+                print(f"\nNo objects left to analyze in {key} set. ")
           
     def queryExecution(self):
         self.manualVsAutomatic = input("Manual [m] / Automatic [a] table input. ")
