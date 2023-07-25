@@ -12,7 +12,8 @@ class ReportBase(DataXtractor):
 
     def __init__(self,list_of_conx_string:list, second_database:str):
         super().__init__(list_of_conx_string=list_of_conx_string, second_database=second_database)
-    
+        
+
     def returnConnectionConfiguration(self):
         return self.conx_string
     
@@ -40,6 +41,11 @@ class ReportBase(DataXtractor):
             cursor.execute("SELECT COUNT(*) as row_count FROM {second_db}.{table}".format(second_db=self.second_database,table = table))
             row_count = cursor.fetchone()[0]
         return row_count
+
+
+
+
+
 
 
     
