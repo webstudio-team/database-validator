@@ -20,6 +20,9 @@ class Report(ReportBase):
         self.reportDict = None
         self.columnsOne = None
         self.columnsTwo = None
+
+#beware
+        self.columnSkipper = True
     
     def reportDictFlip(self, valueIndex:int, value):
         self.reportDict[self.marker][valueIndex] = value
@@ -54,7 +57,7 @@ class Report(ReportBase):
 
     def testColumns(self):
         self.reportDict = {
-            'Attributes': ["Length", "RowCountEqual", "RowCount"],
+            'Attributes': ["ColumnEquality", "RowCount_equality", "RowCount_number"],
             self.marker : [0, 0, 0],
             f"{self.marker}_second": [0, 0, 0]
         }
@@ -63,6 +66,18 @@ class Report(ReportBase):
         self.columnsTwo = list(self.dFrameTwo.columns)
 
         self.columnIntersection = [column for column in self.columnsOne if column in self.columnsTwo]
+        if self.columnSkipper == True:
+            skipColumnAnalysis_prompt = input("Do you wish to skip the analysis of a certain column? y/n")
+            
+            if skipColumnAnalysis_prompt == 'y':
+                while True:
+                    print(self.columnIntersection)
+                    skipColumnAnalysis_name = input("Enter name of columns to skip or enter q to quit appending: ")
+                        
+                    if skipColumnAnalysis_name != 'q':
+                        self.columnIntersection.remove(skipColumnAnalysis_name)
+                    else:
+                        break
 
         if len(self.columnsOne) == len(self.columnsTwo):
             self.reportDictFlip(0, 1)
@@ -141,29 +156,60 @@ class Report(ReportBase):
         elif len(columnsFirstNotSecond) < len(columnsSecondNotFirst):
             for i in range(len(columnsSecondNotFirst)-len(columnsFirstNotSecond)):
                 columnsFirstNotSecond.append('-')
+        
+        #CONFIGURE
+        filepath: str = f"C:\\Users\\balazia\\Ukoly\\Dashboard\\prepis\\Automation\\DataComparison\\Output\\TextReports\\{self.marker}".replace(\
+            ".","_")
+        if not os.path.exists(filepath):
+            os.mkdir(filepath)
 
         csvReport=pd.DataFrame.from_dict(self.reportDict)
-        csvReport.to_csv(f"C:\\Users\\balazia\\Ukoly\\prepis\\Automation\\DataComparison\\Output\\TextReports\\{self.marker}_general.csv")
+        csvReport.to_csv(f"{filepath}\\{self.marker}_general.csv")
 
         csvReport=pd.DataFrame.from_dict(attributeDict)
-        csvReport.to_csv(f"C:\\Users\\balazia\\Ukoly\\prepis\\Automation\\DataComparison\\Output\\TextReports\\{self.marker}.csv")
+        csvReport.to_csv(f"{filepath}\\{self.marker}.csv")
 
         columnDiff = pd.DataFrame.from_dict(columnDif)
-        columnDiff.to_csv(f"C:\\Users\\balazia\\Ukoly\\prepis\\Automation\\DataComparison\\Output\\TextReports\\{self.marker}_diff.csv")
+        columnDiff.to_csv(f"{filepath}\\{self.marker}_diff.csv")
 
 
     def workflow(self):
-        self.getData(self.marker)
-        print(f"Testing {self.marker}")
-        self.report()
-
+        print(f"Loading {self.marker}")
+        rowCount = self.getRowCount(self.marker)
+        rowCountSecond = self.getRowCount(f"{self.second_database}.{self.marker}")
+        #>>>>>>SKIPPING>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        if(rowCount != 0 and rowCountSecond != 0\
+            and rowCount <= 6000000 and rowCountSecond <= 6000000):
+            
+            self.getData(self.marker)
+            print(f"Testing {self.marker}")
+            #skip where one table has 0 rows
+            self.report()
+        elif(rowCount == 0 or rowCountSecond == 0):
+            logger.warning(f"{self.marker} has at least one table with 0 rows - skipping further analysis!!!")
+            #CONFIGURE
+            with open(r"C:\Users\balazia\Ukoly\Dashboard\prepis\Automation\DataComparison\Output\TextReports\SkippedFiles\Skipped.txt"\
+                , 'w', encoding="utf-8") as file:
+                file.write(f"{self.marker} analysis skipped due to one of the tables having 0 records.")        
+        else:
+            skipOrAnalyze = input(f"{self.marker} has more than six milion rows. Do you wish to continue in your analysis? y/n ")
+            
+            if skipOrAnalyze == 'y':
+                self.getData(self.marker)
+                self.report()
+            else:
+                #CONFIGURE
+                with open(r"C:\Users\balazia\Ukoly\Dashboard\prepis\Automation\DataComparison\Output\TextReports\SkippedFiles\Skipped.txt"\
+                    , 'w', encoding="utf-8") as file:
+                    file.write(f"{self.marker} analysis skipped due to one of the tables having too many {rowCount}, {rowCountSecond} records.")
+                    
 
 class Initialiser(ReportBase):
     def __init__(self, config, second_db):
         super().__init__(config, second_db)
         self.configRaw = config
         self.secondDbRaw = second_db
-    
+
 
     def tableInits(self):
         with pyodbc.connect(self.conx_string) as conx:
@@ -171,20 +217,34 @@ class Initialiser(ReportBase):
                 cursor = conx.cursor()
                 logger.info(msg="Attempting to extract table names from the database.")
                 return [('['+row[1]+ ']' + '.' +'['+row[2]+ ']')for row in cursor.tables()]
-                
+    
+    def patternExclude(self,listOfTables: list):    
+        print(listOfTables)
+        proceedExclude = input("Proceed to analysis [y] or enter a pattern for exclusion[n].")
+        if proceedExclude == "n":
+            patternExclude = input("Enter a pattern to exclude from the list or quit[q]: ")
+            while patternExclude != "q":
+                listOfTables = list(filter(lambda x: patternExclude.lower() not in x.lower(),listOfTables))
+                patternExclude = input("Enter a pattern to exclude from the list or quit[q]: ")
+        elif proceedExclude == "y":
+            pass
+        else:
+            print("Invalid key, repeating the process.")
+        return listOfTables
+         
     def patternSearch(self):
         table_list = self.tableInits()
-        patternInput = input("Enter a pattern to filter out tables for analysis or quit[q]")
+        patternInput = input("Enter a pattern to filter out tables for analysis or quit[q]: ")
         
         while patternInput != 'q':
             table_list = list(filter(lambda x: patternInput in x.lower(), table_list))
-            patternInput = input("Enter a pattern to filter out tables for analysis or quit[q]")
-        return table_list
-
+            patternInput = input("Enter a pattern to filter out tables for analysis or quit[q]: ")
+        
+        return self.patternExclude(table_list)
+    
     def organiser(self,tables:list):
         tables=tables
         tasks = [Report(self.configRaw, self.secondDbRaw,str(table)).workflow for table in tables]
-        print(tasks)
         for task in tasks:
             task()
 
@@ -199,5 +259,3 @@ class Initialiser(ReportBase):
             tables = self.patternSearch()
         
         self.organiser(tables)
-
-
